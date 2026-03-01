@@ -215,6 +215,27 @@ class WLGuide(FPDF):
             self.bullet(it)
         self.ln(2)
 
+    def step(self, icon, tool, action, expect):
+        """Render a step with icon, tool, action, expected result."""
+        self.set_font("Helvetica", "B", 10)
+        self.set_text_color(*WL_RED)
+        self.set_x(self.l_margin)
+        self.cell(8, 6, icon)
+        self.set_font("Helvetica", "B", 9.5)
+        self.set_text_color(*WL_NAVY)
+        self.cell(self.get_string_width(tool) + 2, 6, tool)
+        self.set_font("Helvetica", "", 9.5)
+        self.set_text_color(*WL_DARK)
+        self.multi_cell(0, 6, f"  {action}")
+        self.set_fill_color(240, 249, 255)
+        w = self.w - self.l_margin - self.r_margin
+        self.set_x(self.l_margin + 8)
+        self.set_font("Helvetica", "I", 8.5)
+        self.set_text_color(*WL_GREEN)
+        self.cell(w - 8, 5, f"  >> You see: {expect}", fill=True, new_x="LMARGIN", new_y="NEXT")
+        self.set_text_color(*WL_DARK)
+        self.ln(2.5)
+
 
 # ============================================================
 #  DEPLOYMENT GUIDE
@@ -229,131 +250,264 @@ def build_deployment_guide():
     pdf.set_text_color(*WL_NAVY)
     pdf.cell(0, 11, "Table of Contents", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
-    for n, t in [("1", "One-Click Start (Recommended)"), ("2", "Prerequisites (Developer Setup)"), ("3", "Check Your System"),
-                  ("4", "Get the Project Files"), ("5", "Run from Source"), ("6", "Deploy to Railway"),
-                  ("7", "Configure WLOP Credentials"), ("8", "Authentication (HMAC-SHA256)"),
-                  ("9", "Test Card Numbers"), ("10", "Troubleshooting"), ("11", "Project File Overview"),
-                  ("12", "Version History")]:
+    for n, t in [
+        ("1", "Quick Overview: 3 Ways to Run"),
+        ("2", "Method A: One-Click .exe (Easiest)"),
+        ("3", "Method B: Download from GitHub"),
+        ("4", "Method C: Run from Source Code"),
+        ("5", "Method D: Deploy to Railway (Cloud)"),
+        ("6", "Configure WLOP Credentials"),
+        ("7", "Your First Payment (Step by Step)"),
+        ("8", "Authentication (HMAC-SHA256)"),
+        ("9", "Test Card Numbers"),
+        ("10", "Troubleshooting"),
+        ("11", "Project File Overview"),
+        ("12", "Version History"),
+    ]:
         pdf.toc_entry(n, t)
 
-    # 1 - One-Click Start
+    # ============ 1 - Quick Overview ============
     pdf.add_page()
-    pdf.section("1", "One-Click Start (Recommended)")
-    pdf.txt("The fastest way to run WLOP Explorer. No Python installation needed, no command line, no setup - just one double-click.")
+    pdf.section("1", "Quick Overview: 3 Ways to Run")
+    pdf.txt("Choose the method that fits your situation. All three get you the same app.")
+    pdf.ln(3)
+
+    x0, w = pdf.l_margin, pdf.w - pdf.l_margin - pdf.r_margin
+
+    pdf.set_fill_color(236, 253, 245)
+    y0 = pdf.get_y()
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(*WL_GREEN)
+    pdf.set_x(x0)
+    pdf.cell(w, 7, "  [A]  ONE-CLICK .EXE  --  Best for: demos, presentations, quick access", fill=True, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(5, 80, 60)
+    pdf.set_x(x0)
+    pdf.cell(w, 5.5, "  Double-click WLOP_Explorer.exe. Done. No install, no terminal, nothing.", fill=True, new_x="LMARGIN", new_y="NEXT")
+    y1 = pdf.get_y()
+    pdf.set_draw_color(*WL_GREEN)
+    pdf.rect(x0, y0, w, y1 - y0)
+    pdf.ln(4)
+
+    pdf.set_fill_color(*WL_LIGHT)
+    y0 = pdf.get_y()
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(*WL_NAVY)
+    pdf.set_x(x0)
+    pdf.cell(w, 7, "  [B]  GITHUB DOWNLOAD  --  Best for: getting the latest version", fill=True, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(*WL_DARK)
+    pdf.set_x(x0)
+    pdf.cell(w, 5.5, "  Go to GitHub, download the .exe or the source code ZIP. Takes 2 minutes.", fill=True, new_x="LMARGIN", new_y="NEXT")
+    y1 = pdf.get_y()
+    pdf.set_draw_color(*WL_NAVY)
+    pdf.rect(x0, y0, w, y1 - y0)
+    pdf.ln(4)
+
+    pdf.set_fill_color(*WL_LIGHT)
+    y0 = pdf.get_y()
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(*WL_GREY)
+    pdf.set_x(x0)
+    pdf.cell(w, 7, "  [C]  PYTHON SOURCE  --  Best for: developers who want to modify code", fill=True, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(*WL_DARK)
+    pdf.set_x(x0)
+    pdf.cell(w, 5.5, "  Needs Python installed. Clone repo, pip install, python app.py.", fill=True, new_x="LMARGIN", new_y="NEXT")
+    y1 = pdf.get_y()
+    pdf.set_draw_color(*WL_GREY)
+    pdf.rect(x0, y0, w, y1 - y0)
+    pdf.ln(4)
+
+    pdf.set_fill_color(255, 251, 235)
+    y0 = pdf.get_y()
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(*WL_AMBER)
+    pdf.set_x(x0)
+    pdf.cell(w, 7, "  [D]  RAILWAY CLOUD  --  Best for: sharing a URL with colleagues", fill=True, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(120, 60, 0)
+    pdf.set_x(x0)
+    pdf.cell(w, 5.5, "  Deploy to railway.app. Get a public URL anyone can access.", fill=True, new_x="LMARGIN", new_y="NEXT")
+    y1 = pdf.get_y()
+    pdf.set_draw_color(*WL_AMBER)
+    pdf.rect(x0, y0, w, y1 - y0)
+    pdf.ln(5)
+
+    pdf.txt("Not sure? Start with Method A (one-click .exe). You can always switch later.")
+    pdf.sub("Both Apps Side by Side")
+    pdf.txt("Saferpay Explorer = port 5000, WLOP Explorer = port 5001. Run both .exe files at the same time!")
+
+    # ============ 2 - Method A ============
+    pdf.add_page()
+    pdf.section("2", "Method A: One-Click .exe (Easiest)")
+    pdf.txt("Zero setup. No Python, no terminal, no commands. Just a double-click.")
     pdf.ln(2)
-    pdf.sub("How to Start")
-    pdf.num(1, "Locate the file WLOP_Explorer.exe in the project folder")
-    pdf.num(2, "Double-click it")
-    pdf.num(3, "A console window opens showing 'WLOP Explorer starting...'")
-    pdf.num(4, "Your browser opens automatically at http://localhost:5001")
-    pdf.num(5, "Done! Go to the Config tab and enter your Worldline credentials.")
+    pdf.sub("What You Need")
+    pdf.bullet("Windows 10 or 11")
+    pdf.bullet("The file: WLOP_Explorer.exe (13 MB)")
+    pdf.bullet("A web browser (Chrome, Edge, Firefox - already on your PC)")
     pdf.ln(2)
-    pdf.tip("ONE CLICK - THAT'S IT", "The .exe bundles Python, Flask, and all dependencies. Nothing else to install. Just double-click and go.")
+    pdf.sub("Step-by-Step")
+    pdf.step(">>", "[File Explorer]", "Find WLOP_Explorer.exe in your project folder",
+             "A file called WLOP_Explorer.exe (13 MB)")
+    pdf.step(">>", "[Double-Click]", "Double-click the .exe file",
+             "A black console window opens with text")
+    pdf.step(">>", "[Console]", "Wait 2 seconds. The console shows 'WLOP Explorer starting...'",
+             "Your default browser opens automatically")
+    pdf.step(">>", "[Browser]", "The app is running! You see WLOP Explorer with 6 tabs",
+             "The app at http://localhost:5001 with the Explorer tab active")
+    pdf.ln(1)
+    pdf.tip("THAT'S IT!", "4 steps. You're done. Go to Section 6 to configure your Worldline credentials.")
     pdf.ln(2)
-    pdf.sub("How to Stop")
-    pdf.txt("Close the console window (the black terminal), or press CTRL+C in it.")
-    pdf.sub("Windows SmartScreen Warning")
-    pdf.txt("On first launch, Windows may show 'Windows protected your PC'. This is normal for unsigned executables. Click 'More info' and then 'Run anyway'.")
-    pdf.sub("When to Use the .exe vs Python")
-    pdf.bullet("Use the .exe for demos, presentations, quick access - no setup required", "Use .exe: ")
-    pdf.bullet("Use Python if you want to modify the source code or deploy to a server", "Use Python: ")
-    pdf.sub("Running Both Apps Side by Side")
-    pdf.txt("Saferpay Explorer runs on port 5000, WLOP Explorer on port 5001. You can run both .exe files at the same time!")
-    pdf.warn("NOTE", "The .exe runs on the machine where you double-click it. For cloud deployment (Railway), use the Python source method (Section 5-6).")
+    pdf.sub("How to Stop the App")
+    pdf.step(">>", "[Console]", "Click the X on the black console window, or press CTRL+C",
+             "The console closes. The app stops.")
+    pdf.sub("Windows SmartScreen Warning (First Launch Only)")
+    pdf.txt("Windows may show: 'Windows protected your PC'.")
+    pdf.step(">>", "[SmartScreen]", "Click 'More info' (blue link), then click 'Run anyway'",
+             "The app starts normally. This warning won't appear again.")
 
-    # 2 - Prerequisites (Developer Setup)
+    # ============ 3 - Method B: GitHub ============
     pdf.add_page()
-    pdf.section("2", "Prerequisites (Developer Setup)")
-    pdf.txt("Only needed if you want to run from source code or deploy to a server. Skip this if you use the .exe.")
-    pdf.sub("Required Software")
-    pdf.bullet("Python 3.9 or higher - https://www.python.org/downloads/", "Python 3.9+: ")
-    pdf.txt('    IMPORTANT: Check "Add Python to PATH" during installation!')
-    pdf.bullet("pip (comes with Python)", "pip: ")
-    pdf.bullet("Git - https://git-scm.com/downloads", "Git: ")
-    pdf.bullet("A web browser (Chrome, Edge, Firefox)", "Browser: ")
-    pdf.sub("For Railway Deployment (Optional)")
-    pdf.bullet("Railway account - https://railway.app", "Account: ")
-    pdf.bullet("Railway CLI - details in Section 6", "CLI: ")
-    pdf.sub("For Worldline Direct API Access")
-    pdf.bullet("Merchant ID (PSPID) - from the Merchant Portal", "PSPID: ")
-    pdf.bullet("API Key ID - from Merchant Portal > Developer > Payment API", "API Key: ")
-    pdf.bullet("API Secret - shown once on creation (save immediately!)", "API Secret: ")
-    pdf.bullet("Merchant Portal: https://preprod.account.worldline-solutions.com", "Portal: ")
-    pdf.tip("TIP", "You can explore the UI without credentials. The Config tab will prompt when needed.")
+    pdf.section("3", "Method B: Download from GitHub")
+    pdf.txt("Get the latest version from GitHub. Two options: download just the .exe, or download everything.")
+    pdf.ln(2)
+    pdf.sub("Option 1: Download Just the .exe (Fastest)")
+    pdf.step(">>", "[Browser]", "Open: https://github.com/spidermch/WLOP_Demo_Shop/releases",
+             "A page showing 'WLOP Explorer v1.0.0' with release notes")
+    pdf.step(">>", "[Browser]", "Scroll down to 'Assets'. Click 'WLOP_Explorer.exe'",
+             "Download starts (13 MB). Wait for it to finish.")
+    pdf.step(">>", "[File Explorer]", "Go to your Downloads folder. Find WLOP_Explorer.exe",
+             "The file WLOP_Explorer.exe in your Downloads")
+    pdf.step(">>", "[Double-Click]", "Double-click the .exe file (same as Method A from here)",
+             "Console opens, then browser opens at http://localhost:5001")
+    pdf.ln(2)
+    pdf.sub("Option 2: Download Full Source Code (ZIP)")
+    pdf.step(">>", "[Browser]", "Open: https://github.com/spidermch/WLOP_Demo_Shop",
+             "The GitHub repository page with file listing")
+    pdf.step(">>", "[Browser]", "Click the green '<> Code' button (top right of file list)",
+             "A dropdown menu appears")
+    pdf.step(">>", "[Browser]", "Click 'Download ZIP'",
+             "A file WLOP_Demo_Shop-master.zip downloads")
+    pdf.step(">>", "[File Explorer]", "Right-click the ZIP > 'Extract All' > choose a folder",
+             "A folder with all project files: app.py, templates/, static/, etc.")
+    pdf.ln(2)
+    pdf.sub("Option 3: Git Clone (Developers)")
+    pdf.step(">>", "[Terminal]", "Open CMD, PowerShell, or Git Bash",
+             "A command line prompt")
+    pdf.code(["git clone https://github.com/spidermch/WLOP_Demo_Shop.git", "cd WLOP_Demo_Shop"])
 
-    # 3 - Check Your System
+    # ============ 4 - Method C ============
     pdf.add_page()
-    pdf.section("3", "Check Your System")
-    pdf.txt("Open CMD or PowerShell and verify:")
-    pdf.sub("Python")
-    pdf.code(["python --version", "# Expected: Python 3.9+ (e.g. Python 3.12.8)"])
-    pdf.sub("pip")
-    pdf.code(["pip --version", "# If not found: python -m pip --version"])
-    pdf.sub("Git")
-    pdf.code(["git --version"])
-    pdf.sub("Network")
-    pdf.code(["curl https://payment.preprod.direct.worldline-solutions.com --head"])
-    pdf.warn("CORPORATE PROXY", "Set HTTPS_PROXY and HTTP_PROXY env vars if behind a proxy.")
-
-    # 4 - Get the Project Files
-    pdf.section("4", "Get the Project Files")
-    pdf.txt("Only needed if running from source. If using the .exe, skip to Section 7.")
-    pdf.sub("Option A: Git Clone")
-    pdf.code(["git clone <REPOSITORY_URL>", "cd WLOP_Demo_Shop"])
-    pdf.sub("Option B: Copy Folder")
-    pdf.num(1, "Extract ZIP to e.g. C:\\Projects\\WLOP_Demo_Shop")
-    pdf.num(2, "cd C:\\Projects\\WLOP_Demo_Shop")
-    pdf.sub("Verify Structure")
-    pdf.code(["WLOP_Explorer.exe   <-- One-click start!", "app.py  requirements.txt  Procfile  runtime.txt", "templates/  static/  generate_guides.py"])
-
-    # 5 - Run from Source
-    pdf.add_page()
-    pdf.section("5", "Run from Source (Developer Method)")
-    pdf.txt("Alternative to the .exe. Use this if you want to modify the code or need a custom setup.")
-    pdf.sub("Step 1: Virtual Environment")
-    pdf.code(["python -m venv venv", "venv\\Scripts\\activate        # Windows CMD", "source venv/bin/activate     # macOS/Linux"])
-    pdf.sub("Step 2: Install Dependencies")
+    pdf.section("4", "Method C: Run from Source Code")
+    pdf.txt("For developers who want to modify the code. Requires Python to be installed.")
+    pdf.ln(2)
+    pdf.sub("Prerequisites: Install Python")
+    pdf.step(">>", "[Browser]", "Go to https://www.python.org/downloads/ and click 'Download Python 3.12'",
+             "A Python installer file downloads (about 25 MB)")
+    pdf.step(">>", "[Installer]", "Run the installer. IMPORTANT: Check the box 'Add Python to PATH'!",
+             "Python installs. The checkbox is at the BOTTOM of the first screen.")
+    pdf.warn("ADD TO PATH", "If you forget this checkbox, 'python' won't work in the terminal. You'd need to reinstall.")
+    pdf.step(">>", "[Terminal]", "Open CMD or PowerShell. Type: python --version",
+             "'Python 3.12.8' (or similar). If you see this, Python works.")
+    pdf.ln(2)
+    pdf.sub("Install, Run, Open")
+    pdf.step(">>", "[Terminal]", "Navigate to the project folder:",
+             "Your prompt shows the project folder path")
+    pdf.code(["cd C:\\Projects\\WLOP_Demo_Shop"])
+    pdf.step(">>", "[Terminal]", "Create a virtual environment and activate it:",
+             "'(venv)' appears at the start of your prompt")
+    pdf.code(["python -m venv venv", "venv\\Scripts\\activate"])
+    pdf.step(">>", "[Terminal]", "Install dependencies (takes ~10 seconds):",
+             "'Successfully installed Flask requests ...'")
     pdf.code(["pip install -r requirements.txt"])
-    pdf.sub("Step 3: Start the App")
-    pdf.code(["python app.py", "# Running on http://127.0.0.1:5001"])
-    pdf.sub("Step 4: Open Browser")
-    pdf.code(["http://localhost:5001"])
-    pdf.tip("TIP", "The WLOP Explorer runs on port 5001 by default (port 5000 is used by the Saferpay Explorer). Press CTRL+C to stop.")
+    pdf.step(">>", "[Terminal]", "Start the app:",
+             "'Running on http://127.0.0.1:5001'")
+    pdf.code(["python app.py"])
+    pdf.step(">>", "[Browser]", "Open http://localhost:5001 in your browser",
+             "The WLOP Explorer app with 6 tabs")
 
-    # 6 - Deploy to Railway
+    # ============ 5 - Method D ============
     pdf.add_page()
-    pdf.section("6", "Deploy to Railway")
-    pdf.txt("Railway is a cloud platform. The app includes Procfile + runtime.txt for auto-detection.")
-    pdf.sub("CLI Method")
-    pdf.num(1, "Sign up at https://railway.app")
-    pdf.num(2, "Install CLI: npm install -g @railway/cli")
-    pdf.num(3, "railway login")
-    pdf.num(4, "cd WLOP_Demo_Shop && railway init")
-    pdf.num(5, "railway variables set SECRET_KEY=your-random-key")
-    pdf.num(6, "railway up")
-    pdf.num(7, "railway open")
-    pdf.sub("Dashboard Method (No CLI)")
-    pdf.num(1, "Push to GitHub")
-    pdf.num(2, "railway.app > New Project > Deploy from GitHub")
-    pdf.num(3, "Add SECRET_KEY in Variables tab")
-    pdf.num(4, "Settings > Networking > Generate Domain")
-    pdf.tip("TIP", "GitHub pushes trigger automatic redeployment.")
+    pdf.section("5", "Method D: Deploy to Railway (Cloud)")
+    pdf.txt("Host the app online so anyone with the URL can access it. Free tier available.")
+    pdf.ln(2)
+    pdf.sub("Step-by-Step (Browser Method)")
+    pdf.step(">>", "[Browser]", "Go to https://railway.app and click 'Start a New Project'",
+             "Sign-up page. Sign in with your GitHub account.")
+    pdf.step(">>", "[Railway]", "Click 'Deploy from GitHub Repo'",
+             "A list of your GitHub repositories")
+    pdf.step(">>", "[Railway]", "Select 'WLOP_Demo_Shop' from the list",
+             "Railway starts building your app (takes 1-2 minutes)")
+    pdf.step(">>", "[Railway]", "Click your project > Variables tab > 'New Variable'",
+             "A form to add environment variables")
+    pdf.step(">>", "[Railway]", "Add: Name=SECRET_KEY, Value=any-random-text-here",
+             "The variable appears in the list")
+    pdf.step(">>", "[Railway]", "Go to Settings > Networking > click 'Generate Domain'",
+             "A public URL like xxx.up.railway.app")
+    pdf.step(">>", "[Browser]", "Open your Railway URL in a new tab",
+             "The WLOP Explorer running in the cloud!")
+    pdf.tip("AUTO-DEPLOY", "Push changes to GitHub and Railway automatically redeploys within 60 seconds.")
 
-    # 7 - Configure WLOP Credentials
-    pdf.page_check()
-    pdf.section("7", "Configure WLOP Credentials")
-    pdf.txt("Open the app > Config tab. Enter:")
-    pdf.bullet("Your PSPID from the Merchant Portal", "Merchant ID (PSPID): ")
-    pdf.bullet("API Key ID from Developer > Payment API section", "API Key: ")
-    pdf.bullet("Secret API Key - shown ONCE on creation (save immediately!)", "API Secret: ")
-    pdf.bullet("Test: payment.preprod.direct.worldline-solutions.com (default)", "Base URL: ")
-    pdf.warn("API SECRET", "The API Secret disappears after 60 seconds in the portal. Copy it immediately when created!")
-    pdf.warn("SESSION STORAGE", "Credentials stored in browser session only. Re-enter after restart.")
+    # ============ 6 - Configure Credentials ============
+    pdf.add_page()
+    pdf.section("6", "Configure WLOP Credentials")
+    pdf.txt("After the app is running (any method), you need to enter your Worldline Direct API credentials.")
+    pdf.ln(2)
+    pdf.sub("Where to Get Credentials")
+    pdf.step(">>", "[Browser]", "Open https://preprod.account.worldline-solutions.com (Merchant Portal)",
+             "Worldline Merchant Portal login page")
+    pdf.step(">>", "[Portal]", "Log in with your test account",
+             "The Merchant Portal dashboard")
+    pdf.step(">>", "[Portal]", "Go to Developer > Payment API. Note your Merchant ID (PSPID)",
+             "Your PSPID at the top of the page")
+    pdf.step(">>", "[Portal]", "Click 'Add API key'. Copy the API Key ID and API Secret",
+             "API Key ID and Secret are shown")
+    pdf.warn("SAVE THE API SECRET", "The Secret disappears after 60 seconds! Copy it IMMEDIATELY to a safe place.")
+    pdf.ln(2)
+    pdf.sub("Enter Credentials in the App")
+    pdf.step(">>", "[App]", "Click the 'Config' tab in WLOP Explorer",
+             "A form with 3 required fields + Base URL dropdown")
+    pdf.step(">>", "[App]", "Fill in: Merchant ID (PSPID), API Key, API Secret",
+             "All 3 fields filled. Base URL = preprod (default, correct for testing)")
+    pdf.step(">>", "[App]", "Click 'Save Configuration'",
+             "Green message: 'Configuration saved'. Header badge turns green: 'Connected'.")
+    pdf.tip("DONE!", "Your WLOP Explorer is now connected to the Worldline test environment. Go to Section 7!")
 
-    # 8 - Authentication (HMAC-SHA256)
+    # ============ 7 - First Payment ============
+    pdf.add_page()
+    pdf.section("7", "Your First Payment (Step by Step)")
+    pdf.txt("Let's make a test payment end-to-end. This takes about 60 seconds.")
+    pdf.ln(2)
+    pdf.step(">>", "[App]", "Click the 'Explorer' tab",
+             "Split view: shop on the left, API console on the right")
+    pdf.step(">>", "[Left Panel]", "Click 'Add to Cart' on any product (e.g. Swiss Luxury Watch)",
+             "Cart badge shows '1'. Product is in your cart.")
+    pdf.step(">>", "[Left Panel]", "Click 'Checkout' (or the cart icon)",
+             "Cart summary with total, customer selector, and payment method choice")
+    pdf.step(">>", "[Left Panel]", "Select 'Hosted Checkout' as integration method",
+             "'Hosted Checkout' option is highlighted")
+    pdf.step(">>", "[Left Panel]", "Click 'Pay Now'",
+             "A popup window opens showing the Worldline payment page")
+    pdf.step(">>", "[Popup]", "Select 'Visa' and enter test card: 4012 0000 3333 0026",
+             "Card form filled in")
+    pdf.step(">>", "[Popup]", "Expiry: 12/2030, CVC: 123. Click 'Pay'",
+             "Payment processes. Popup closes automatically.")
+    pdf.step(">>", "[Left Panel]", "The result appears: 'Payment Authorised'",
+             "Green success message with transaction details")
+    pdf.step(">>", "[Right Panel]", "Check the Developer View on the right side",
+             "2 API calls logged: CreateHostedCheckout + GetStatus, with full JSON")
+    pdf.step(">>", "[Left Panel]", "Click the green 'Capture' button",
+             "Status changes to CAPTURED. Right panel shows CapturePayment API call.")
+    pdf.ln(2)
+    pdf.tip("CONGRATULATIONS!", "You've completed your first end-to-end payment! Try the Server-to-Server method next or explore Orders, Journey, Customers, and Code tabs.")
+
+    # ============ 8 - HMAC Auth ============
     pdf.add_page()
     pdf.section("8", "Authentication (HMAC-SHA256)")
-    pdf.txt("The Worldline Direct API uses HMAC-SHA256 for authentication. Every request is signed with your API Secret.")
+    pdf.txt("The Worldline Direct API uses HMAC-SHA256 for authentication. Every request is signed with your API Secret. The app handles this automatically - this section is for understanding.")
+    pdf.ln(2)
     pdf.sub("How It Works")
     pdf.num(1, "A 'string-to-hash' is built from: HTTP method, Content-Type (POST only), Date, and resource path.")
     pdf.num(2, "This string is signed using HMAC-SHA256 with your API Secret as the key.")
@@ -364,11 +518,13 @@ def build_deployment_guide():
     pdf.code(["POST", "application/json; charset=utf-8", "Mon, 01 Mar 2026 12:00:00 GMT", "/v2/YourPSPID/hostedcheckouts", ""])
     pdf.sub("String-to-Hash (GET)")
     pdf.code(["GET", "Mon, 01 Mar 2026 12:00:00 GMT", "/v2/YourPSPID/hostedcheckouts/hcId", ""])
-    pdf.tip("HANDLED AUTOMATICALLY", "The WLOP Explorer handles all signing automatically. You just need to provide the API Key and Secret in the Config tab.")
+    pdf.tip("HANDLED AUTOMATICALLY", "You never need to build HMAC signatures yourself. The app does it in wlop_sign() and wlop_request() functions.")
 
-    # 9 - Test Card Numbers
+    # ============ 9 - Test Cards ============
     pdf.add_page()
     pdf.section("9", "Test Card Numbers")
+    pdf.txt("Use these card numbers in the Worldline preprod environment:")
+    pdf.ln(2)
     for brand, num in [("Visa", "4012 0000 3333 0026"), ("Mastercard", "5399 9999 9999 9999"),
                         ("American Express", "3714 496353 98431")]:
         pdf.set_font("Helvetica", "B", 9.5)
@@ -377,38 +533,45 @@ def build_deployment_guide():
         pdf.set_font("Courier", "", 9.5)
         pdf.cell(0, 5.5, num, new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
-    pdf.txt("Expiry: any future date (e.g. 12/2030)  |  CVC: any 3 digits")
-    pdf.tip("TIP", "These are Worldline preprod test cards. Use them only on the preprod (test) environment.")
+    pdf.sub("Additional Details")
+    pdf.bullet("Any future date (e.g. 12/2030)", "Expiry: ")
+    pdf.bullet("Any 3 digits (e.g. 123)", "CVC: ")
+    pdf.warn("DIFFERENT CARDS", "These are Worldline Direct API test cards. They differ from Saferpay test cards!")
 
-    # 10 - Troubleshooting
+    # ============ 10 - Troubleshooting ============
     pdf.section("10", "Troubleshooting")
-    pdf.sub("'python' not recognized")
-    pdf.txt("Reinstall Python with 'Add to PATH' checked.")
-    pdf.sub("pip SSL/proxy errors")
-    pdf.code(["pip install -r requirements.txt --trusted-host pypi.org --trusted-host files.pythonhosted.org"])
-    pdf.sub("Port 5001 in use")
+    pdf.sub("SmartScreen blocks the .exe")
+    pdf.txt("Click 'More info' then 'Run anyway'. This is normal for unsigned apps.")
+    pdf.sub("Browser doesn't open automatically")
+    pdf.txt("Open your browser manually and go to http://localhost:5001")
+    pdf.sub("'python' not recognized (Source method)")
+    pdf.txt("Reinstall Python. Make sure 'Add to PATH' is checked during installation.")
+    pdf.sub("Port 5001 already in use")
+    pdf.txt("Another app is using port 5001. Close it or use a different port:")
     pdf.code(["set PORT=8081 && python app.py"])
-    pdf.sub("Popup blocked")
-    pdf.txt("Allow popups for localhost. Fallback link is shown in the UI.")
     pdf.sub("401 / HMAC Signature Error")
-    pdf.txt("Check API Key and API Secret in Config tab. Ensure they match your PSPID. Verify your system clock is accurate (HMAC uses Date header).")
+    pdf.txt("Wrong API Key or Secret. Go to Config tab and re-enter. Also check your system clock is correct (HMAC uses the Date header).")
     pdf.sub("403 Forbidden / Invalid PSPID")
-    pdf.txt("Ensure the Merchant ID (PSPID) matches your account. Check that API credentials belong to the correct environment (test vs production).")
+    pdf.txt("The Merchant ID (PSPID) doesn't match your API credentials. Make sure they belong to the same account and environment (test vs production).")
+    pdf.sub("App crashes / console closes immediately")
+    pdf.txt("Open CMD first, then drag the .exe into the CMD window and press Enter. You can see the error message.")
 
-    # 11 - Project File Overview
+    # ============ 11 - Project Files ============
     pdf.add_page()
     pdf.section("11", "Project File Overview")
+    pdf.txt("What each file does:")
+    pdf.ln(2)
     for f, d in [("WLOP_Explorer.exe", "One-click launcher - double-click to start!"),
                   ("app.py", "Flask backend: HMAC auth, payment logic, CRM, products, code viewer"),
                   ("run.py", "Launcher script used by the .exe (auto-opens browser)"),
                   ("requirements.txt", "Dependencies: Flask, requests, gunicorn"),
                   ("Procfile", "Railway start command (gunicorn)"),
                   ("templates/index.html", "SPA with 6 tabs: Explorer, Products, Orders, Customers, Code, Config"),
-                  ("templates/return.html", "Popup return page after payment"),
+                  ("templates/return.html", "Payment popup return page"),
                   ("static/js/app.js", "Client logic: cart, payments, CRM, code viewer"),
                   ("static/css/style.css", "Styling: responsive layout, dark dev console"),
                   ("static/img/", "Worldline logo assets"),
-                  ("generate_guides.py", "PDF guide generator script")]:
+                  ("generate_guides.py", "PDF guide generator (creates this document)")]:
         pdf.set_font("Courier", "B", 8.5)
         pdf.set_text_color(*WL_RED)
         pdf.cell(42, 5.5, f)
