@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><title>Payment Return</title>
+<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f0f2f5}
+.msg{text-align:center;padding:2rem;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.msg h2{margin-bottom:.5rem}
+.success{color:#10b981}.fail{color:#ef4444}.pending{color:#f59e0b}</style>
+</head>
+<body>
+<div class="msg">
+{% if status == 'success' %}
+    <h2 class="success">Payment Complete</h2>
+    <p>Returning to shop...</p>
+{% elif status == 'fail' %}
+    <h2 class="fail">Payment Cancelled</h2>
+    <p>Returning to shop...</p>
+{% elif status == 's2s_return' %}
+    <h2 class="pending">Processing...</h2>
+    <p>Verifying payment status...</p>
+{% endif %}
+</div>
+<script>
+(function(){
+    var type = '{{ status }}';
+    if (window.opener) {
+        window.opener.postMessage({type: 'wlop_return', status: type}, '*');
+    }
+    setTimeout(function(){ try { window.close(); } catch(e){} }, 1500);
+})();
+</script>
+</body>
+</html>
