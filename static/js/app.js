@@ -15,6 +15,7 @@ var state = {
     products: [],
     customers: [],
     customerDetailId: null,
+    checkoutDetails: { name: '', email: '', address: '', city: '', zip: '', country: '', phone: '' },
 };
 
 function $(id) { return document.getElementById(id); }
@@ -53,6 +54,7 @@ function renderShopper() {
     var el = $('shopper-content');
     if (state.shopView === 'catalog') { renderCatalog(el); return; }
     if (state.shopView === 'cart') { renderCart(el); return; }
+    if (state.shopView === 'customer_details') { renderCustomerDetails(el); return; }
     if (state.shopView === 'checkout') { renderCheckout(el); return; }
     if (state.shopView === 'processing') {
         el.innerHTML = '<div class="processing-view"><div class="processing-spinner"></div><p>Processing payment...</p><p class="dev-hint">The customer is on the Worldline payment page.</p></div>';
@@ -97,16 +99,49 @@ function renderCart(el) {
         h += '<button class="cart-item-remove" onclick="removeFromCart(' + i + ')">x</button></div>';
     });
     h += '</div><div class="cart-footer"><div class="cart-total"><span>Total</span><span>' + fmt(total) + '</span></div>';
-    h += '<div class="cart-actions"><button class="btn btn-primary" onclick="state.shopView=\'checkout\';renderShopper()">Checkout</button><button class="btn btn-secondary" onclick="state.cart=[];renderShopper()">Clear</button></div></div></div>';
+    h += '<div class="cart-actions"><button class="btn btn-primary" onclick="state.shopView=\'customer_details\';renderShopper()">Proceed to Checkout</button><button class="btn btn-secondary" onclick="state.cart=[];renderShopper()">Clear</button></div></div></div>';
     el.innerHTML = h;
+}
+
+function renderCustomerDetails(el) {
+    var total = 0; state.cart.forEach(function(i) { total += i.price; });
+    var h = '<div class="shop-nav"><h3>Customer Details</h3><button class="btn btn-sm btn-secondary" onclick="state.shopView=\'cart\';renderShopper()">Back to Cart</button></div>';
+    h += '<div class="checkout-form-panel">';
+    h += '<div class="checkout-section"><label>Full Name <span class="required">*</span></label><input type="text" id="cd-name" placeholder="John Doe" value="' + esc(state.checkoutDetails.name || '') + '"></div>';
+    h += '<div class="checkout-section"><label>Email Address <span class="required">*</span></label><input type="email" id="cd-email" placeholder="john@example.com" value="' + esc(state.checkoutDetails.email || '') + '"></div>';
+    h += '<div class="checkout-section"><label>Street Address <span class="required">*</span></label><input type="text" id="cd-address" placeholder="123 Main Street" value="' + esc(state.checkoutDetails.address || '') + '"></div>';
+    h += '<div style="display:flex;gap:.5rem">';
+    h += '<div class="checkout-section" style="flex:1"><label>City <span class="required">*</span></label><input type="text" id="cd-city" placeholder="Zurich" value="' + esc(state.checkoutDetails.city || '') + '"></div>';
+    h += '<div class="checkout-section" style="flex:1"><label>Postal Code</label><input type="text" id="cd-zip" placeholder="8001" value="' + esc(state.checkoutDetails.zip || '') + '"></div>';
+    h += '</div>';
+    h += '<div style="display:flex;gap:.5rem">';
+    h += '<div class="checkout-section" style="flex:1"><label>Country</label><input type="text" id="cd-country" placeholder="Switzerland" value="' + esc(state.checkoutDetails.country || '') + '"></div>';
+    h += '<div class="checkout-section" style="flex:1"><label>Phone</label><input type="text" id="cd-phone" placeholder="+41 79 123 4567" value="' + esc(state.checkoutDetails.phone || '') + '"></div>';
+    h += '</div>';
+    h += '<p style="font-size:.72rem;color:var(--text-muted);margin-top:.25rem">* Required fields</p>';
+    h += '<div style="margin-top:1rem"><button class="btn btn-primary" onclick="proceedToPayment()" style="width:100%">Continue to Payment (' + fmt(total) + ')</button></div>';
+    h += '</div>';
+    el.innerHTML = h;
+}
+
+function proceedToPayment() {
+    var name = ($('cd-name') || {}).value || '';
+    var email = ($('cd-email') || {}).value || '';
+    var address = ($('cd-address') || {}).value || '';
+    var city = ($('cd-city') || {}).value || '';
+    if (!name.trim() || !email.trim() || !address.trim() || !city.trim()) {
+        alert('Please fill in all required fields (name, email, address, city).');
+        return;
+    }
+    state.checkoutDetails = { name: name, email: email, address: address, city: city, zip: ($('cd-zip') || {}).value || '', country: ($('cd-country') || {}).value || '', phone: ($('cd-phone') || {}).value || '' };
+    state.shopView = 'checkout';
+    renderShopper();
 }
 
 function renderCheckout(el) {
     var total = 0; state.cart.forEach(function(i) { total += i.price; });
-    var h = '<div class="shop-nav"><h3>Checkout</h3><button class="btn btn-sm btn-secondary" onclick="state.shopView=\'cart\';renderShopper()">Back to Cart</button></div>';
-    h += '<div class="checkout-section"><label>Customer</label><select id="checkout-customer"><option value="">Guest</option>';
-    state.customers.forEach(function(c) { h += '<option value="' + c.id + '">' + esc(c.name) + (c.email ? ' (' + esc(c.email) + ')' : '') + '</option>'; });
-    h += '</select></div>';
+    var h = '<div class="shop-nav"><h3>Payment</h3><button class="btn btn-sm btn-secondary" onclick="state.shopView=\'customer_details\';renderShopper()">Back to Details</button></div>';
+    h += '<div class="checkout-summary"><strong>Customer:</strong> ' + esc(state.checkoutDetails.name) + ' &middot; ' + esc(state.checkoutDetails.email) + '</div>';
     h += '<div class="checkout-section"><label>Payment Flow</label><select id="checkout-flow">';
     h += '<option value="hostedcheckout">Hosted Checkout (recommended)</option>';
     h += '<option value="s2s">Server-to-Server (advanced)</option>';
@@ -121,19 +156,11 @@ async function checkout() {
 
     var total = 0; state.cart.forEach(function(i) { total += i.price; });
     state.paymentFlow = ($('checkout-flow') || {}).value || 'hostedcheckout';
-    var customerId = ($('checkout-customer') || {}).value || '';
     state.shopView = 'processing'; renderShopper();
 
-    var body = { amount: total, currency: 'EUR', items: state.cart, customer_id: customerId || undefined };
-
-    // Add payer info from CRM
-    if (customerId) {
-        var cust = state.customers.find(function(c) { return c.id === customerId; });
-        if (cust) {
-            var parts = (cust.name || '').split(' ');
-            body.payer = { FirstName: parts[0] || '', LastName: parts.slice(1).join(' ') || '', Email: cust.email || '' };
-        }
-    }
+    var cd = state.checkoutDetails;
+    var parts = (cd.name || '').split(' ');
+    var body = { amount: total, currency: 'EUR', items: state.cart, payer: { FirstName: parts[0] || '', LastName: parts.slice(1).join(' ') || '', Email: cd.email || '' } };
 
     try {
         var url = state.paymentFlow === 'hostedcheckout' ? '/api/hosted-checkout/create' : '/api/payment/create';
@@ -244,7 +271,7 @@ function renderResult(el) {
         h += '<h3>Payment Failed</h3>';
         h += '<p class="text-muted">' + esc(typeof res.error === 'string' ? res.error : JSON.stringify(res.error)) + '</p>';
     }
-    h += '<button class="btn btn-secondary" style="margin-top:1rem" onclick="state.shopView=\'catalog\';state.paymentResult=null;state.paymentToken=null;state.currentPaymentId=null;state.currentOrderId=null;renderShopper()">New Order</button>';
+    h += '<button class="btn btn-secondary" style="margin-top:1rem" onclick="state.shopView=\'catalog\';state.paymentResult=null;state.paymentToken=null;state.currentPaymentId=null;state.currentOrderId=null;state.checkoutDetails={name:\'\',email:\'\',address:\'\',city:\'\',zip:\'\',country:\'\',phone:\'\'};renderShopper()">New Order</button>';
     h += '</div>';
     el.innerHTML = h;
 }

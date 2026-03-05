@@ -3,11 +3,34 @@ import uuid
 import hmac
 import hashlib
 import base64
+import logging
+import traceback
+import json
 import requests as http_requests
 from datetime import datetime, timezone
 from email.utils import formatdate
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+# ==================== Debug Logger ====================
+DEBUG_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug.log')
+
+debug_logger = logging.getLogger('wlop_debug')
+debug_logger.setLevel(logging.DEBUG)
+_fh = logging.FileHandler(DEBUG_LOG_FILE, encoding='utf-8')
+_fh.setFormatter(logging.Formatter('%(asctime)s | %(levelname)s | %(message)s'))
+debug_logger.addHandler(_fh)
+
+def log_error(context, error, extra=None):
+    """Log an error with context to the debug file for remote diagnostics."""
+    entry = {
+        'timestamp': datetime.utcnow().isoformat() + 'Z',
+        'context': context,
+        'error': str(error),
+        'traceback': traceback.format_exc() if traceback.format_exc().strip() != 'NoneType: None' else None,
+        'extra': extra,
+    }
+    debug_logger.error(json.dumps(entry, default=str))
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'wlop-explorer-dev-key-change-me')
@@ -384,6 +407,7 @@ def create_hosted_checkout():
         else:
             return jsonify({'success': False, 'error': resp.json() if resp.text else {'message': 'Request failed'}, 'log': log_entry}), 400
     except Exception as e:
+        log_error('create_hosted_checkout', e, extra={'order_id': order_id})
         log_entry['status_code'] = 0
         log_entry['response'] = {'error': str(e)}
         store['logs'].append(log_entry)
@@ -447,6 +471,7 @@ def get_hc_status():
                 store['transactions'][hc_id]['status_code'] = 2
             return jsonify({'success': False, 'error': resp.json() if resp.text else {}, 'log': log_entry}), 400
     except Exception as e:
+        log_error('get_hc_status', e, extra={'hc_id': hc_id})
         log_entry['status_code'] = 0
         log_entry['response'] = {'error': str(e)}
         store['logs'].append(log_entry)
@@ -553,6 +578,7 @@ def create_payment_s2s():
         else:
             return jsonify({'success': False, 'error': resp.json() if resp.text else {}, 'log': log_entry}), 400
     except Exception as e:
+        log_error('create_payment_s2s', e, extra={'order_id': order_id})
         log_entry['status_code'] = 0
         log_entry['response'] = {'error': str(e)}
         store['logs'].append(log_entry)
@@ -614,6 +640,7 @@ def get_payment_status():
         else:
             return jsonify({'success': False, 'error': resp.json() if resp.text else {}, 'log': log_entry}), 400
     except Exception as e:
+        log_error('get_payment_status', e, extra={'payment_id': payment_id})
         log_entry['status_code'] = 0
         log_entry['response'] = {'error': str(e)}
         store['logs'].append(log_entry)
@@ -658,6 +685,7 @@ def capture_payment():
         else:
             return jsonify({'success': False, 'error': resp.json() if resp.text else {}, 'log': log_entry}), 400
     except Exception as e:
+        log_error('capture_payment', e, extra={'payment_id': payment_id})
         log_entry['status_code'] = 0
         log_entry['response'] = {'error': str(e)}
         store['logs'].append(log_entry)
@@ -928,6 +956,45 @@ def unlock_code():
     if data.get('password') == SERVICE_PASSWORD:
         return jsonify({'unlocked': True})
     return jsonify({'unlocked': False, 'error': 'Wrong password'}), 403
+
+
+# ==================== Debug Log API ====================
+
+@app.route('/api/debug/logs')
+def get_debug_logs():
+    """Read the debug log file for remote diagnostics."""
+    data = request.args
+    if data.get('password') != SERVICE_PASSWORD:
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        if os.path.exists(DEBUG_LOG_FILE):
+            with open(DEBUG_LOG_FILE, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            return jsonify({'logs': lines[-200:], 'total_lines': len(lines)})
+        return jsonify({'logs': [], 'total_lines': 0})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debug/logs/clear', methods=['POST'])
+def clear_debug_logs():
+    data = request.json or {}
+    if data.get('password') != SERVICE_PASSWORD:
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        with open(DEBUG_LOG_FILE, 'w', encoding='utf-8') as f:
+            f.write('')
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ==================== Global Error Handler ====================
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    log_error('unhandled_exception', e, extra={'url': request.url, 'method': request.method})
+    return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
 
 
 if __name__ == '__main__':
