@@ -17,7 +17,7 @@ WL_WHITE = (255, 255, 255)
 WL_GREEN = (16, 185, 129)
 WL_AMBER = (180, 83, 9)
 
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 DATE = "March 2026"
 
 
@@ -355,7 +355,7 @@ def build_deployment_guide():
              "A black console window opens with text")
     pdf.step(">>", "[Console]", "Wait 2 seconds. The console shows 'WLOP Explorer starting...'",
              "Your default browser opens automatically")
-    pdf.step(">>", "[Browser]", "The app is running! You see WLOP Explorer with 6 tabs",
+    pdf.step(">>", "[Browser]", "The app is running! You see WLOP Explorer with 3 main tabs",
              "The app at http://localhost:5001 with the Explorer tab active")
     pdf.ln(1)
     pdf.tip("THAT'S IT!", "4 steps. You're done. Go to Section 6 to configure your Worldline credentials.")
@@ -375,7 +375,7 @@ def build_deployment_guide():
     pdf.ln(2)
     pdf.sub("Option 1: Download Just the .exe (Fastest)")
     pdf.step(">>", "[Browser]", "Open: https://github.com/spidermch/WLOP_Demo_Shop/releases",
-             "A page showing 'WLOP Explorer v1.0.0' with release notes")
+             "A page showing 'WLOP Explorer v2.0.0' with release notes")
     pdf.step(">>", "[Browser]", "Scroll down to 'Assets'. Click 'WLOP_Explorer.exe'",
              "Download starts (13 MB). Wait for it to finish.")
     pdf.step(">>", "[File Explorer]", "Go to your Downloads folder. Find WLOP_Explorer.exe",
@@ -426,7 +426,7 @@ def build_deployment_guide():
              "'Running on http://127.0.0.1:5001'")
     pdf.code(["python app.py"])
     pdf.step(">>", "[Browser]", "Open http://localhost:5001 in your browser",
-             "The WLOP Explorer app with 6 tabs")
+             "The WLOP Explorer app with 3 main tabs")
 
     # ============ 5 - Method D ============
     pdf.add_page()
@@ -467,7 +467,7 @@ def build_deployment_guide():
     pdf.warn("SAVE THE API SECRET", "The Secret disappears after 60 seconds! Copy it IMMEDIATELY to a safe place.")
     pdf.ln(2)
     pdf.sub("Enter Credentials in the App")
-    pdf.step(">>", "[App]", "Click the 'Config' tab in WLOP Explorer",
+    pdf.step(">>", "[App]", "Click the 'Dev' tab, then the 'Config' sub-tab in WLOP Explorer",
              "A form with 3 required fields + Base URL dropdown")
     pdf.step(">>", "[App]", "Fill in: Merchant ID (PSPID), API Key, API Secret",
              "All 3 fields filled. Base URL = preprod (default, correct for testing)")
@@ -566,7 +566,7 @@ def build_deployment_guide():
                   ("run.py", "Launcher script used by the .exe (auto-opens browser)"),
                   ("requirements.txt", "Dependencies: Flask, requests, gunicorn"),
                   ("Procfile", "Railway start command (gunicorn)"),
-                  ("templates/index.html", "SPA with 6 tabs: Explorer, Products, Orders, Customers, Code, Config"),
+                  ("templates/index.html", "SPA with 3 tabs (Explorer, Merchant Admin, Dev) with sub-tabs"),
                   ("templates/return.html", "Payment popup return page"),
                   ("static/js/app.js", "Client logic: cart, payments, CRM, code viewer"),
                   ("static/css/style.css", "Styling: responsive layout, dark dev console"),
@@ -597,6 +597,18 @@ def build_deployment_guide():
         "Configuration tab with PSPID, API Key, API Secret, Base URL",
         "Railway deployment support (Procfile, runtime.txt)",
     ])
+    pdf.version_entry("2.0.0", "March 2026", [
+        "Tab restructure: 6 tabs consolidated into 3 (Explorer, Merchant Admin, Dev) with sub-tabs",
+        "Merchant Admin sub-tabs: Items (catalog), Customers (CRM), Orders (transactions)",
+        "Dev sub-tabs: Code (source viewer), Config (credentials), Feature Audit",
+        "Enhanced product cards with larger size and hover effects",
+        "Customer search/select at checkout: New Customer or Select Existing from CRM",
+        "Full customer details form: Name, Email, Street, City, Postal Code, Country, Phone",
+        "Post-order reset: webshop clears for next order after completion",
+        "Feature Audit activation notes: 'How to enable' for every non-implemented feature",
+        "Added OmniChannel Integration (bridge POS and e-commerce)",
+        "Added MOTO (Mail Order/Telephone Order) transaction support",
+    ])
     pdf.sub("Planned")
     pdf.bullet("Cancel payment (POST /v2/{mid}/payments/{id}/cancel)")
     pdf.bullet("Refund payment (POST /v2/{mid}/payments/{id}/refund)")
@@ -625,11 +637,10 @@ def build_user_guide():
     pdf.cell(0, 11, "Table of Contents", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
     for n, t in [("1", "Introduction"), ("2", "Quick Start"), ("3", "Explorer Tab"),
-                  ("4", "Products Tab"), ("5", "Orders Tab"), ("6", "Customers (CRM) Tab"),
-                  ("7", "Code Tab"), ("8", "Configuration Tab"),
-                  ("9", "Payment Flows Explained"), ("10", "HMAC Authentication"),
-                  ("11", "API Reference"), ("12", "Status Codes"),
-                  ("13", "Test Cards"), ("14", "Version History")]:
+                  ("4", "Merchant Admin Tab"), ("5", "Dev Tab"),
+                  ("6", "Payment Flows Explained"), ("7", "HMAC Authentication"),
+                  ("8", "API Reference"), ("9", "Status Codes"),
+                  ("10", "Test Cards"), ("11", "Version History")]:
         pdf.toc_entry(n, t)
 
     # 1 - Introduction
@@ -652,6 +663,8 @@ def build_user_guide():
     pdf.bullet("Annotated source code viewer for learning")
     pdf.bullet("Real Worldline preprod environment integration")
     pdf.bullet("HMAC-SHA256 authentication - the real production auth method")
+    pdf.bullet("Customer search and selection at checkout")
+    pdf.bullet("Feature audit with activation notes for backoffice setup")
     pdf.sub("Architecture")
     pdf.txt("Backend: Python Flask | Frontend: Vanilla JavaScript (no frameworks) | Auth: HMAC-SHA256 | Deployment: Railway-ready | API: Worldline Direct API v2")
 
@@ -661,7 +674,7 @@ def build_user_guide():
     pdf.txt("Get up and running in 5 steps:")
     pdf.ln(2)
     pdf.num(1, "Open the app in your browser (http://localhost:5001 or your Railway URL)")
-    pdf.num(2, "Go to the Config tab and enter your Worldline Direct API credentials (PSPID, API Key, API Secret)")
+    pdf.num(2, "Go to the Dev tab > Config sub-tab and enter your Worldline Direct API credentials")
     pdf.num(3, "Switch to the Explorer tab - you'll see the shop on the left, API console on the right")
     pdf.num(4, "Add products to the cart and click 'Pay Now'")
     pdf.num(5, "Complete payment with a test card and watch the API flow in real-time!")
@@ -669,14 +682,11 @@ def build_user_guide():
     pdf.tip("FIRST TIME?", "If you don't have credentials yet, you can still browse the UI. The app will prompt you to configure credentials when you try to make a payment.")
     pdf.ln(2)
     pdf.sub("Navigation")
-    pdf.txt("The app has 6 main tabs in the top navigation bar:")
+    pdf.txt("The app has 3 main tabs in the top navigation bar:")
     pdf.ln(1)
-    pdf.bullet("The payment flow visualizer with split-screen", "Explorer: ")
-    pdf.bullet("Manage your product catalog", "Products: ")
-    pdf.bullet("View transactions, stats, journey viewer, and feature audit", "Orders: ")
-    pdf.bullet("Customer relationship management", "Customers: ")
-    pdf.bullet("View annotated source code", "Code: ")
-    pdf.bullet("API credentials and environment settings", "Config: ")
+    pdf.bullet("The payment flow visualizer with split-screen shop + API debugger", "Explorer: ")
+    pdf.bullet("Merchant dashboard with sub-tabs: Items (catalog), Customers (CRM), Orders (transactions)", "Merchant Admin: ")
+    pdf.bullet("Developer tools with sub-tabs: Code (source viewer), Config (credentials), Feature Audit", "Dev: ")
 
     # 3 - Explorer
     pdf.add_page()
@@ -703,114 +713,69 @@ def build_user_guide():
     pdf.bullet("All-in-one redirect. Worldline shows all enabled payment methods on a hosted page. Simplest integration. Uses CreateHostedCheckout + GetHostedCheckoutStatus.", "Hosted Checkout: ")
     pdf.bullet("Direct server-to-server payment. Requires PCI compliance or Hosted Tokenization for card data. Uses CreatePayment + GetPaymentDetails.", "Server-to-Server: ")
 
-    # 4 - Products
+    # 4 - Merchant Admin
     pdf.add_page()
-    pdf.section("4", "Products Tab")
+    pdf.section("4", "Merchant Admin Tab")
+    pdf.txt("The Merchant Admin tab contains three sub-tabs for managing your store: Items, Customers, and Orders.")
+
+    pdf.sub("Items (Product Catalog)")
     pdf.txt("Manage the product catalog that appears in the shop. The app starts with 4 demo products (Swiss-themed) but you can customize freely.")
-    pdf.sub("Adding a Product")
-    pdf.num(1, "Click '+ Add Product' button")
-    pdf.num(2, "Enter the product name (required) and price in EUR")
-    pdf.num(3, "Add an optional description")
-    pdf.num(4, "Pick an icon from the icon grid (20 options)")
-    pdf.num(5, "Click 'Add Product'")
-    pdf.sub("Editing a Product")
-    pdf.txt("Click the pencil icon on any product card. The form pre-fills with the current values. Make changes and click 'Save Changes'.")
-    pdf.sub("Deactivating / Deleting")
-    pdf.bullet("X icon: Deactivates the product (hidden from shop, can reactivate later)")
-    pdf.bullet("Trash icon: Permanently deletes the product")
+    pdf.bullet("Click '+ Add Product' to create a new product with name, price (EUR), description, and icon")
+    pdf.bullet("Click the pencil icon on any product card to edit it")
+    pdf.bullet("X icon deactivates a product (can reactivate later); trash icon permanently deletes")
     pdf.tip("TIP", "Deactivate seasonal products instead of deleting them - you can reactivate them later without re-entering all the details.")
 
-    # 5 - Orders
-    pdf.add_page()
-    pdf.section("5", "Orders Tab")
-    pdf.txt("The merchant's view of all transactions processed through the shop.")
-    pdf.sub("Dashboard Stats")
-    pdf.txt("Four metric cards at the top show:")
-    pdf.bullet("Total number of payment attempts", "Total Orders: ")
-    pdf.bullet("Sum of all transaction amounts", "Total Volume: ")
-    pdf.bullet("Payments approved but not yet settled (statusCode 5)", "Authorised: ")
-    pdf.bullet("Payments settled (statusCode 9)", "Captured: ")
-    pdf.sub("Transaction Table")
-    pdf.txt("Shows all transactions with: Order ID, customer name, amount, status badge, integration flow (HC or S2S), payment method, time, and action buttons.")
-    pdf.sub("Capturing Payments")
-    pdf.txt("Authorized transactions show a green 'Capture' button. Clicking it sends CapturePayment to Worldline, settling the payment. The status changes from Authorised to Captured.")
-    pdf.sub("Order Journey Viewer")
-    pdf.txt("Click the 'Journey' button on any order to see a visual timeline of the entire payment flow. Each step shows:")
-    pdf.bullet("Whether it was executed by the merchant app, the Worldline API, or the customer's browser")
-    pdf.bullet("Color-coded actor badges: blue for merchant, green for Worldline API, orange for browser")
-    pdf.bullet("Expandable API request/response data for each API call step")
-    pdf.sub("Feature Audit")
-    pdf.txt("Click 'Feature Audit' in the Orders header to see a coverage analysis of which Worldline Direct API features are implemented in the demo vs which are available. Includes a donut chart and categorized feature list.")
-    pdf.sub("Status Colors")
-    pdf.bullet("Blue - Payment session created (statusCode 0)", "CREATED: ")
-    pdf.bullet("Amber - Payment approved, funds reserved (statusCode 5)", "AUTHORISED: ")
-    pdf.bullet("Green - Payment settled, funds will transfer (statusCode 9)", "CAPTURED: ")
-    pdf.bullet("Red - Payment declined, cancelled, or error (statusCode 2, 75, 96)", "FAILED: ")
-
-    # 6 - Customers
-    pdf.add_page()
-    pdf.section("6", "Customers (CRM) Tab")
+    pdf.sub("Customers (CRM)")
     pdf.txt("A lightweight CRM for managing customer relationships. Customers can be linked to orders for tracking and reporting.")
-    pdf.sub("Customer List")
-    pdf.txt("Shows all customers as cards with name, company, order count, and lifetime spend. Use the search bar to filter by name, email, or company.")
-    pdf.sub("Adding a Customer")
-    pdf.num(1, "Click '+ Add Customer'")
-    pdf.num(2, "Enter name (required), email, company, phone, address")
-    pdf.num(3, "Click 'Add Customer'")
-    pdf.sub("Customer Detail View")
-    pdf.txt("Click any customer card to see their full profile:")
-    pdf.bullet("Contact information (email, company, phone, address)")
-    pdf.bullet("Order count and lifetime value")
-    pdf.bullet("Notes section - add timestamped notes about the customer")
-    pdf.bullet("Full order history with status and payment flow")
-    pdf.sub("Notes")
-    pdf.txt("Notes are useful for tracking interactions: 'VIP customer - always offer express checkout', 'Prefers invoice payment', 'Contacted about recurring billing', etc.")
-    pdf.sub("Linking to Orders")
-    pdf.txt("When checking out in the Explorer, select a customer from the dropdown. The order will be linked to that customer, and their order count/lifetime value updates automatically.")
+    pdf.bullet("Customer list shows cards with name, company, order count, and lifetime spend")
+    pdf.bullet("Search bar to filter by name, email, or company")
+    pdf.bullet("Click any customer to see full profile with notes and order history")
+    pdf.bullet("Add timestamped notes for tracking interactions")
+    pdf.bullet("When checking out in Explorer, select a customer to link the order")
 
-    # 7 - Code
-    pdf.add_page()
-    pdf.section("7", "Code Tab")
-    pdf.txt("View the actual application source code with educational annotations. Perfect for developers who want to understand how the Worldline Direct API integration works.")
-    pdf.sub("File Selection")
-    pdf.txt("Four files are available: app.py (backend), app.js (frontend), style.css (styling), index.html (template). Click any file tab to load it.")
-    pdf.sub("Annotations")
-    pdf.txt("Key lines are highlighted with a purple background. Click any highlighted line to reveal an explanation of what that code does and why it matters for the payment integration.")
-    pdf.txt("Over 20 annotations cover: HMAC signing, API authentication, payment flows, status codes, security considerations, and architectural decisions.")
-    pdf.sub("Line Highlighting")
-    pdf.bullet("Purple background = annotated line (click for explanation)")
-    pdf.bullet("Blue left border = API route/endpoint definition")
-    pdf.bullet("Green left border = Worldline API interaction")
-    pdf.sub("Edit Mode")
-    pdf.txt("By default, code is read-only. To enable editing:")
-    pdf.num(1, "Click 'Unlock Edit' button")
-    pdf.num(2, "Enter the service password")
-    pdf.num(3, "Code switches to an editable text area")
-    pdf.num(4, "Click 'Save Changes' (re-confirms password)")
-    pdf.warn("IMPORTANT", "Code editing is restricted to authorized service personnel. The password is not shared in this guide - contact your team lead. Python changes require a server restart.")
+    pdf.sub("Orders (Transactions)")
+    pdf.txt("The merchant's view of all transactions processed through the shop.")
+    pdf.bullet("Dashboard stats: Total Orders, Total Volume, Authorised, Captured")
+    pdf.bullet("Transaction table with Order ID, customer, amount, status, flow, payment method, time")
+    pdf.bullet("Green 'Capture' button on authorized transactions to settle payments")
+    pdf.bullet("Order Journey Viewer: click 'Journey' button to see visual timeline of payment flow")
+    pdf.bullet("Status colors: Blue (Created), Amber (Authorised), Green (Captured), Red (Failed)")
 
-    # 8 - Config
+    # 5 - Dev
     pdf.add_page()
-    pdf.section("8", "Configuration Tab")
+    pdf.section("5", "Dev Tab")
+    pdf.txt("The Dev tab contains three sub-tabs for developers and technical users: Code, Config, and Feature Audit.")
+
+    pdf.sub("Code (Source Viewer)")
+    pdf.txt("View the actual application source code with educational annotations. Four files available: app.py, app.js, style.css, index.html.")
+    pdf.bullet("Key lines highlighted with purple background - click for explanations")
+    pdf.bullet("Blue left border = API route/endpoint; Green left border = Worldline API interaction")
+    pdf.bullet("20+ annotations covering HMAC signing, API auth, payment flows, security")
+    pdf.bullet("Edit mode available with service password (contact team lead)")
+
+    pdf.sub("Config (API Credentials)")
     pdf.txt("Set up your Worldline Direct API credentials to connect to the test (or production) environment.")
-    pdf.sub("Required Fields")
     pdf.bullet("Your PSPID from the Merchant Portal", "Merchant ID (PSPID): ")
     pdf.bullet("API Key ID from Developer > Payment API", "API Key: ")
     pdf.bullet("Secret API Key (shown once, save immediately!)", "API Secret: ")
-    pdf.sub("Environment")
-    pdf.txt("Select Test (preprod) or Production from the Base URL dropdown. Always use Test for demos and development.")
+    pdf.txt("Select Test (preprod) or Production from the Base URL dropdown. Credentials are stored in browser session only.")
     pdf.sub("Order Settings")
     pdf.txt("Below the main credentials, configure:")
     pdf.bullet("Text prefix for generated order IDs (default: WLOP)", "Order ID Prefix: ")
     pdf.bullet("Choose from: PREFIX-UUID, PREFIX-TIMESTAMP, PREFIX-SEQ, FLOW-PREFIX-UUID", "Order ID Pattern: ")
     pdf.bullet("Sent as references.descriptor to Worldline", "Default Description: ")
-    pdf.sub("Connection Status")
-    pdf.txt("The header shows a green 'Connected' badge when configured, or red 'Not configured' when credentials are missing. A yellow banner at the top also prompts setup.")
-    pdf.warn("SESSION STORAGE", "Credentials are stored in your browser session cookie. They are NOT saved permanently on the server. You'll need to re-enter them after clearing cookies or restarting.")
+    pdf.warn("SESSION STORAGE", "Credentials are NOT saved permanently. Re-enter after clearing cookies or restarting the server.")
 
-    # 9 - Payment Flows
+    pdf.sub("Feature Audit")
+    pdf.txt("Coverage analysis of which Worldline Direct API features are implemented in the demo vs available. Includes a donut chart and categorized feature list.")
+    pdf.bullet("Every non-implemented feature shows 'How to enable' with backoffice activation instructions")
+    pdf.bullet("OmniChannel Integration: bridge POS and e-commerce channels")
+    pdf.bullet("MOTO Transactions: mail/phone order processing")
+    pdf.bullet("Activation notes cover account configuration, Merchant Portal settings, and PCI requirements")
+
+    # 6 - Payment Flows
     pdf.add_page()
-    pdf.section("9", "Payment Flows Explained")
+    pdf.section("6", "Payment Flows Explained")
     pdf.sub("Flow 1: Hosted Checkout")
     pdf.txt("The simplest Worldline integration. Recommended for most merchants.")
     pdf.ln(1)
@@ -833,9 +798,9 @@ def build_user_guide():
     pdf.txt("Hosted Checkout is simpler (single redirect, automatic payment method display). S2S gives more control (direct payment processing, 3DS handling). Both end with the same Capture call.")
     pdf.tip("EDUCATIONAL NOTE", "In the Developer View, Hosted Checkout calls show endpoint /hostedcheckouts and S2S calls show /payments. The Capture step is shared.")
 
-    # 10 - HMAC Authentication
+    # 7 - HMAC Authentication
     pdf.add_page()
-    pdf.section("10", "HMAC Authentication")
+    pdf.section("7", "HMAC Authentication")
     pdf.txt("Unlike Saferpay (which uses HTTP Basic Auth), the Worldline Direct API uses HMAC-SHA256 signatures for every request. This is more secure as the API Secret never leaves your server.")
     pdf.sub("Step-by-Step")
     pdf.num(1, "Build the string-to-hash from: HTTP method, Content-Type (POST only), Date (RFC 1123), and resource path")
@@ -858,9 +823,9 @@ def build_user_guide():
     pdf.bullet("The string-to-hash always ends with a trailing newline")
     pdf.tip("AUTOMATIC", "The WLOP Explorer app handles all HMAC signing automatically via the wlop_sign() and wlop_request() functions in app.py.")
 
-    # 11 - API Reference
+    # 8 - API Reference
     pdf.add_page()
-    pdf.section("11", "API Reference")
+    pdf.section("8", "API Reference")
     pdf.txt("All internal API endpoints used by the application:")
     pdf.ln(2)
     endpoints = [
@@ -895,9 +860,9 @@ def build_user_guide():
         pdf.cell(0, 5.2, desc, new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.3)
 
-    # 12 - Status Codes
+    # 9 - Status Codes
     pdf.add_page()
-    pdf.section("12", "Status Codes")
+    pdf.section("9", "Status Codes")
     pdf.txt("The Worldline Direct API uses numeric status codes (unlike Saferpay's string-based statuses). Key codes:")
     pdf.ln(2)
     status_codes = [
@@ -926,9 +891,9 @@ def build_user_guide():
     pdf.ln(2)
     pdf.tip("TIP", "Status codes 5 (Authorised) and 9 (Captured) are the two 'happy path' statuses. Code 5 means you can capture; code 9 means money is settled.")
 
-    # 13 - Test Cards
+    # 10 - Test Cards
     pdf.page_check()
-    pdf.section("13", "Test Card Numbers")
+    pdf.section("10", "Test Card Numbers")
     for brand, num in [("Visa", "4012 0000 3333 0026"), ("Mastercard", "5399 9999 9999 9999"),
                         ("American Express", "3714 496353 98431")]:
         pdf.set_font("Helvetica", "B", 9.5)
@@ -942,9 +907,9 @@ def build_user_guide():
     pdf.sub("Worldline vs Saferpay Test Cards")
     pdf.txt("Note that Worldline Direct API (WLOP) uses different test card numbers than the Saferpay API. The cards listed above are specific to the Worldline preprod environment.")
 
-    # 14 - Version History
+    # 11 - Version History
     pdf.add_page()
-    pdf.section("14", "Version History")
+    pdf.section("11", "Version History")
     pdf.version_entry("1.0.0", "March 2026", [
         "Initial release with Explorer split-view (Shopper + Developer)",
         "Hosted Checkout flow (CreateHostedCheckout, GetStatus, Capture)",
@@ -959,6 +924,18 @@ def build_user_guide():
         "Configurable Order ID patterns with 4 options",
         "Test card reference for Worldline preprod environment",
         "Railway deployment support (Procfile, runtime.txt)",
+    ])
+    pdf.version_entry("2.0.0", "March 2026", [
+        "Tab restructure: 6 tabs consolidated into 3 (Explorer, Merchant Admin, Dev) with sub-tabs",
+        "Merchant Admin sub-tabs: Items (catalog), Customers (CRM), Orders (transactions)",
+        "Dev sub-tabs: Code (source viewer), Config (credentials), Feature Audit",
+        "Enhanced product cards with larger size and hover effects",
+        "Customer search/select at checkout: New Customer or Select Existing from CRM",
+        "Full customer details form: Name, Email, Street, City, Postal Code, Country, Phone",
+        "Post-order reset: webshop clears for next order after completion",
+        "Feature Audit with activation notes: 'How to enable' for every non-implemented feature",
+        "OmniChannel Integration added to feature audit",
+        "MOTO (Mail Order/Telephone Order) support added to feature audit",
     ])
     pdf.sub("Roadmap")
     pdf.bullet("Cancel payment (POST /v2/{mid}/payments/{id}/cancel)")
@@ -983,12 +960,12 @@ def build_user_guide():
     pdf.set_font("Helvetica", "", 11)
     pdf.set_text_color(*WL_DARK)
     for i, step in enumerate([
-        "Open the app and go to Config tab",
+        "Open the app and go to Dev > Config sub-tab",
         "Enter your PSPID, API Key, and API Secret",
         "Switch to Explorer and add products to cart",
         "Choose Hosted Checkout or Server-to-Server at checkout",
+        "Select a customer or enter new customer details",
         "Pay with a test card and watch the API flow",
-        "Explore Orders, Journey, Customers, and Code tabs",
     ], 1):
         pdf.cell(0, 7.5, f"     {i}.  {step}", align="L", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(10)
