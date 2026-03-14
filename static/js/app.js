@@ -16,6 +16,9 @@ var state = {
     customers: [],
     customerDetailId: null,
     checkoutDetails: { name: '', email: '', address: '', city: '', zip: '', country: '', phone: '' },
+    selectedCustomerId: '',
+    showCustomerSearch: false,
+    customerSearchQuery: '',
 };
 
 function $(id) { return document.getElementById(id); }
@@ -40,13 +43,30 @@ async function api(url, opts) {
 
 // ================ TABS ================
 function switchTab(tab) {
+    if (tab === 'products') { switchTab('merchant'); setTimeout(function(){switchSubTab('merchant', 'items');},0); return; }
+    if (tab === 'orders') { switchTab('merchant'); setTimeout(function(){switchSubTab('merchant', 'orders');},0); return; }
+    if (tab === 'customers') { switchTab('merchant'); setTimeout(function(){switchSubTab('merchant', 'customers');},0); return; }
+    if (tab === 'code') { switchTab('dev'); setTimeout(function(){switchSubTab('dev', 'code');},0); return; }
+    if (tab === 'config') { switchTab('dev'); setTimeout(function(){switchSubTab('dev', 'config');},0); return; }
+
     document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
     document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.toggle('active', c.id === 'tab-' + tab); });
-    if (tab === 'products') loadProducts();
-    if (tab === 'orders') refreshOrders();
-    if (tab === 'customers') loadCustomers();
-    if (tab === 'code' && !codeState.currentFile) loadCode('app.py', document.querySelector('[data-file="app.py"]'));
 }
+
+function switchSubTab(parentTab, subtab) {
+    var parent = $('tab-' + parentTab);
+    if (!parent) return;
+    parent.querySelectorAll('.subtab-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.subtab === subtab); });
+    parent.querySelectorAll('.subtab-content').forEach(function(c) { c.classList.toggle('active', c.id === 'subtab-' + subtab); });
+    if (subtab === 'items') loadProducts();
+    if (subtab === 'customers') loadCustomers();
+    if (subtab === 'orders') refreshOrders();
+    if (subtab === 'audit') loadFeatureAudit();
+    if (subtab === 'code' && !codeState.currentFile) loadCode('app.py', document.querySelector('[data-file="app.py"]'));
+}
+window.switchTab = switchTab;
+window.switchSubTab = switchSubTab;
+
 document.querySelectorAll('.tab-btn').forEach(function(b) { b.addEventListener('click', function() { switchTab(b.dataset.tab); }); });
 
 // ================ SHOPPER VIEW ================
@@ -107,6 +127,27 @@ function renderCustomerDetails(el) {
     var total = 0; state.cart.forEach(function(i) { total += i.price; });
     var h = '<div class="shop-nav"><h3>Customer Details</h3><button class="btn btn-sm btn-secondary" onclick="state.shopView=\'cart\';renderShopper()">Back to Cart</button></div>';
     h += '<div class="checkout-form-panel">';
+    h += '<div class="customer-select-panel">';
+    h += '<div class="customer-select-options">';
+    h += '<button class="btn ' + (!state.selectedCustomerId ? 'btn-primary' : 'btn-secondary') + '" onclick="selectNewCustomer()">New Customer</button>';
+    h += '<button class="btn ' + (state.selectedCustomerId ? 'btn-primary' : 'btn-secondary') + '" onclick="showCustomerSearchPanel()">Select Existing</button>';
+    h += '</div>';
+    if (state.showCustomerSearch) {
+        h += '<input type="text" id="checkout-customer-search" placeholder="Search by name, email..." oninput="filterCheckoutCustomers()" value="' + esc(state.customerSearchQuery || '') + '">';
+        h += '<div class="customer-search-results">';
+        var q = (state.customerSearchQuery || '').toLowerCase();
+        state.customers.filter(function(c) {
+            if (!q) return true;
+            return (c.name||'').toLowerCase().indexOf(q) >= 0 || (c.email||'').toLowerCase().indexOf(q) >= 0;
+        }).forEach(function(c) {
+            h += '<div class="customer-search-result" onclick="selectCheckoutCustomer(\'' + c.id + '\')">';
+            h += '<div class="csr-name">' + esc(c.name) + '</div>';
+            h += '<div class="csr-meta">' + esc(c.email || '') + (c.company ? ' - ' + esc(c.company) : '') + '</div>';
+            h += '</div>';
+        });
+        h += '</div>';
+    }
+    h += '</div>';
     h += '<div class="checkout-section"><label>Full Name <span class="required">*</span></label><input type="text" id="cd-name" placeholder="John Doe" value="' + esc(state.checkoutDetails.name || '') + '"></div>';
     h += '<div class="checkout-section"><label>Email Address <span class="required">*</span></label><input type="email" id="cd-email" placeholder="john@example.com" value="' + esc(state.checkoutDetails.email || '') + '"></div>';
     h += '<div class="checkout-section"><label>Street Address <span class="required">*</span></label><input type="text" id="cd-address" placeholder="123 Main Street" value="' + esc(state.checkoutDetails.address || '') + '"></div>';
@@ -123,6 +164,21 @@ function renderCustomerDetails(el) {
     h += '</div>';
     el.innerHTML = h;
 }
+
+window.selectNewCustomer = function() { state.selectedCustomerId = ''; state.showCustomerSearch = false; state.checkoutDetails = {name:'',email:'',address:'',city:'',zip:'',country:'',phone:''}; renderShopper(); };
+window.showCustomerSearchPanel = function() { state.showCustomerSearch = true; loadCustomers(true); renderShopper(); };
+window.selectCheckoutCustomer = function(cid) {
+    var c = state.customers.find(function(x) { return x.id === cid; });
+    if (!c) return;
+    state.selectedCustomerId = cid;
+    state.showCustomerSearch = false;
+    state.checkoutDetails.name = c.name || '';
+    state.checkoutDetails.email = c.email || '';
+    state.checkoutDetails.phone = c.phone || '';
+    if (c.address) state.checkoutDetails.address = c.address;
+    renderShopper();
+};
+window.filterCheckoutCustomers = function() { state.customerSearchQuery = ($('checkout-customer-search') || {}).value || ''; renderShopper(); };
 
 function proceedToPayment() {
     var name = ($('cd-name') || {}).value || '';
@@ -271,7 +327,7 @@ function renderResult(el) {
         h += '<h3>Payment Failed</h3>';
         h += '<p class="text-muted">' + esc(typeof res.error === 'string' ? res.error : JSON.stringify(res.error)) + '</p>';
     }
-    h += '<button class="btn btn-secondary" style="margin-top:1rem" onclick="state.shopView=\'catalog\';state.paymentResult=null;state.paymentToken=null;state.currentPaymentId=null;state.currentOrderId=null;state.checkoutDetails={name:\'\',email:\'\',address:\'\',city:\'\',zip:\'\',country:\'\',phone:\'\'};renderShopper()">New Order</button>';
+    h += '<button class="btn btn-secondary" style="margin-top:1rem" onclick="resetForNewOrder()">New Order</button>';
     h += '</div>';
     el.innerHTML = h;
 }
@@ -287,6 +343,21 @@ async function capturePayment() {
         renderShopper();
     } catch(e) {}
 }
+
+window.resetForNewOrder = function() {
+    state.shopView = 'catalog';
+    state.paymentResult = null;
+    state.paymentToken = null;
+    state.currentPaymentId = null;
+    state.currentOrderId = null;
+    state.checkoutDetails = {name:'',email:'',address:'',city:'',zip:'',country:'',phone:''};
+    state.selectedCustomerId = '';
+    state.showCustomerSearch = false;
+    state.customerSearchQuery = '';
+    state.apiLogs = [];
+    renderShopper();
+    renderDevPanel();
+};
 
 function _uid() { return Math.random().toString(36).substr(2, 12); }
 
@@ -491,16 +562,14 @@ function renderJourneyPanel(data) {
 function closeJourney() { $('order-journey-overlay').classList.add('hidden'); }
 
 // ================ FEATURE AUDIT ================
-async function showFeatureAudit() {
-    var panel = $('feature-audit-panel'), mainView = $('orders-main-view');
-    if (!panel.classList.contains('hidden')) { panel.classList.add('hidden'); mainView.classList.remove('hidden'); return; }
-    mainView.classList.add('hidden');
-    panel.classList.remove('hidden');
-    $('feature-audit-content').innerHTML = '<div class="processing-view"><div class="processing-spinner"></div><p>Loading audit...</p></div>';
+async function loadFeatureAudit() {
+    var el = $('feature-audit-content');
+    if (!el) return;
+    el.innerHTML = '<div class="processing-view"><div class="processing-spinner"></div><p>Loading audit...</p></div>';
     try {
         var r = await api('/api/feature-audit');
         if (r.ok) renderFeatureAudit(r.data);
-    } catch(e) { $('feature-audit-content').innerHTML = '<p class="text-muted" style="padding:2rem">Error loading audit.</p>'; }
+    } catch(e) { el.innerHTML = '<p class="text-muted" style="padding:2rem">Error loading audit.</p>'; }
 }
 
 function renderFeatureAudit(data) {
@@ -520,6 +589,7 @@ function renderFeatureAudit(data) {
             h += '<span class="audit-check">' + (f.implemented ? '&#10003;' : '&#9675;') + '</span>';
             h += '<div class="audit-feature-info"><strong>' + esc(f.name) + '</strong>';
             h += '<div class="audit-feature-desc">' + esc(f.description) + '</div>';
+            if (f.activation_note) h += '<div class="audit-activation-note"><strong>How to enable:</strong> ' + esc(f.activation_note) + '</div>';
             if (f.endpoint) h += '<code class="audit-endpoint">' + esc(f.endpoint) + '</code>';
             h += '</div></div>';
         });
@@ -528,8 +598,6 @@ function renderFeatureAudit(data) {
     h += '</div>';
     $('feature-audit-content').innerHTML = h;
 }
-
-function backToOrders() { $('feature-audit-panel').classList.add('hidden'); $('orders-main-view').classList.remove('hidden'); }
 
 // ================ CUSTOMERS VIEW ================
 async function loadCustomers(silent) {
